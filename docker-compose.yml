@@ -1,0 +1,18 @@
+version: '3'
+
+networks: 
+    dashboard_network:
+        external: true
+
+services: 
+    keycloak_extension_api:
+        hostname: keycloak_extension_api
+        container_name: keycloak_extension_api
+        image: keycloak_extension_api
+        networks: 
+            - dashboard_network
+        env_file:
+            - db_connection.env
+        ports: 
+            - 9093:5000
+        restart: always
