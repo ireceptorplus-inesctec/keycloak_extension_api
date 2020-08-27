@@ -14,5 +14,5 @@ services:
         env_file:
             - db_connection.env
         ports: 
-            - 9093:5000
+            - 9093:8000
         restart: always

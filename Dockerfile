@@ -13,6 +13,6 @@ COPY . /app
 
 EXPOSE 5000
 
-ENTRYPOINT [ "python3" ]
+ENTRYPOINT [ "gunicorn" ]
 
-CMD [ "api.py" ]
+CMD [ "--workers=4", "--bind=0.0.0.0:8000", "api:app" ]
