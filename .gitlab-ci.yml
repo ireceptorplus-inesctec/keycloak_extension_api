@@ -15,5 +15,5 @@ build-master:
     - docker build -t $CI_REGISTRY_IMAGE:$VERSION .
     - docker push $CI_REGISTRY_IMAGE:$VERSION
   only:
-    - master
-    - master-schedule
+    - adc-middleware
+    - adc-middleware-schedule
