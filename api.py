@@ -11,7 +11,7 @@ import os
 
 app = Flask(__name__)
 
-SERVERS = ['immunedb', 'scireptor', 'turnkey']
+SERVERS = ['adc-middleware']
 
 POLICY_INSERT = "INSERT INTO resource_server_policy " + \
     "(id, name, type, resource_server_id, owner) " + \
