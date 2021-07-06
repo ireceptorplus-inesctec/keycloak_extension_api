@@ -11,7 +11,7 @@ import os
 
 app = Flask(__name__)
 
-SERVERS = ['immunedb', 'scireptor', 'turnkey']
+SERVERS = ['adc-middleware']
 
 POLICY_INSERT = "INSERT INTO resource_server_policy " + \
     "(id, name, type, resource_server_id, owner) " + \
@@ -65,7 +65,7 @@ def get_user_id(email_user):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("SELECT id FROM user_entity WHERE email LIKE '{0}' OR username LIKE '{0}'".format(email_user))
+        cursor.execute("SELECT id FROM user_entity WHERE email LIKE '{0}' OR username LIKE '{0}' OR id LIKE '{0}'".format(email_user))
 
         id = cursor.fetchone()[0]
     except:
