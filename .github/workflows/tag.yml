@@ -50,7 +50,7 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: edgar1simao/keycloak_extension_api:${{ env.RELEASE_VERSION }},edgar1simao/keycloak_extension_api:latest
+          tags: irpinesctec/keycloak_extension_api:${{ env.RELEASE_VERSION }},irpinesctec/keycloak_extension_api:latest
           build-args: |
             RELEASE_VERSION=${{ env.RELEASE_VERSION }}
       
