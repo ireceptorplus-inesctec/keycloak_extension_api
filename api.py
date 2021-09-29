@@ -124,11 +124,56 @@ def give_access(where):
 
     return jsonify("Ticket created successfully")
 
+@app.route('/change_owner/<resource_id>/<new_owner>', methods=['POST'])
+def change_owner(resource_id, new_owner):
+    auth_header = request.headers.get('Authorization')
+
+    conn = start_connection()
+
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT owner FROM resource_server_resource WHERE id LIKE '{0}'".format(resource_id))
+
+        resource_owner_id = cursor.fetchone()[0]
+    except:
+        abort(404, "Could not find resource")
+
+    if resource_owner_id != get_user_info(auth_header[7:])['sub']:
+        abort(401, "Not owner of resource")
+
+    try:
+        cursor.execute("SELECT id FROM user_entity WHERE email LIKE '{0}' OR username LIKE '{0}' OR id LIKE '{0}'".format(new_owner))
+
+        new_owner_id = cursor.fetchone()[0]
+    except:
+        abort(401, "Could not find user")
+
+    try:
+        owner_update = "UPDATE resource_server_resource " + \
+            "SET owner = '{0}' " + \
+            "WHERE id LIKE '{1}'"
+        cursor.execute(owner_update.format(new_owner_id, resource_id))
+    except:
+        abort(401, "Update failed")
+    
+    conn.commit()
+    
+    cursor.close()
+
+    conn.close()
+
+    return jsonify("Owner changed successfully")
+
 @app.errorhandler(401)
 def unauthorized(error):
     response = jsonify({'message': error.description})
     response.status_code = 401
     return response
+
+@app.errorhandler(500)
+def internal_error(error):
+    return "Uncaught exception: is keycloak reachable?"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
