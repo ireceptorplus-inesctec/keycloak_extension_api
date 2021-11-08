@@ -85,6 +85,16 @@ def get_user_scope_id(email_user):
 
     return jsonify([user_id, scope_id])
 
+@app.route('/get_user_id/<email_user>', methods=['POST'])
+def get_user_id_rest(email_user):
+    auth_header = request.headers.get('Authorization')
+
+    check_request_validity(auth_header)
+
+    user_id = get_user_id(email_user)
+
+    return jsonify(user_id)
+
 @app.route('/change_owner/<resource_id>/<new_owner>', methods=['POST'])
 def change_owner(resource_id, new_owner):
     auth_header = request.headers.get('Authorization')
