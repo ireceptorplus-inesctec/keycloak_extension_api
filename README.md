@@ -14,7 +14,7 @@ Docker image availible at: https://hub.docker.com/r/irpinesctec/keycloak_extensi
 
 #### Natively 
 
-1. Copy the `db_connection.env.example`and rename it to `db_connection.env`. 
+1. Copy the `.env.example`and rename it to `.env`. 
    Open the file and edit it to match your environment.
 
 2. Install requirements using your Python package manager of choice. With PIP:
