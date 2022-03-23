@@ -65,6 +65,7 @@ def get_user_id(email_user):
         abort(401, "Could not find user")
 
     cursor.close()
+    db_connection_pool.putconn(conn)
 
     return id
 
@@ -79,6 +80,7 @@ def get_user_email(user_id):
         abort(401, "Could not find user")
 
     cursor.close()
+    db_connection_pool.putconn(conn)
 
     return id
 
@@ -94,6 +96,7 @@ def get_scope_id(scope_name):
         abort(401, "Could not find scope")
 
     cursor.close()
+    db_connection_pool.putconn(conn)
 
     return id
 
@@ -159,6 +162,7 @@ def change_owner(resource_id, new_owner):
 
     conn.commit()
     cursor.close()
+    db_connection_pool.putconn(conn)
 
     return jsonify("Owner changed successfully")
 
