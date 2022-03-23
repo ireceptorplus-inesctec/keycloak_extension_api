@@ -15,4 +15,4 @@ EXPOSE 5000
 
 ENTRYPOINT [ "gunicorn" ]
 
-CMD [ "--workers=4", "--bind=0.0.0.0:8000", "api:app" ]
+CMD [ "--workers=4", "--bind=0.0.0.0:5000", "api:app" ]

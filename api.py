@@ -1,30 +1,45 @@
-import jsonify
 import requests
 from flask import Flask, request, abort, jsonify
 import psycopg2
-import os
+from psycopg2 import pool
+import os, sys
 
 app = Flask(__name__)
+db_connection_pool = None
+
+def init_db_pool():
+    try:
+        global db_connection_pool
+        db_connection_pool = psycopg2.pool.SimpleConnectionPool(1, 20,
+            host=os.environ['DB_HOST'],
+            port=os.environ['DB_PORT'],
+            database=os.environ['DB_DATABASE'],
+            user=os.environ['DB_USER'],
+            password=os.environ['DB_PASSWORD']
+        )
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Error while connecting to PostgreSQL. Please check your environment settings.", error)
+        sys.exit(-1)
 
 def start_connection():
     try:
-        return psycopg2.connect(
-            database=os.environ['DB_DATABASE'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'],
-            host=os.environ['DB_HOST'], port=os.environ['DB_PORT']
-        )
-    except:
-        abort(401, "Could not connect to DB")
+        return db_connection_pool.getconn()
+    except Exception as error:
+        abort(401, "Could not connect to DB: {}".format(e))
 
 def check_request_validity(auth_header):
     if auth_header == None:
         abort(401, 'No token')
+
+    if 'owner_id' not in request.form:
+        abort(401, "'owner_id' is not present in form request")
 
     if get_user_info(auth_header[7:])['sub'] != request.form['owner_id']:
         abort(401, 'Request can only be made by the resource owner')
 
 def get_user_info(token):
     url = os.environ['KEYCLOAK_URL'] \
-        + 'realms/' \
+        + '/realms/' \
         + os.environ['REALM'] \
         + '/protocol/openid-connect/userinfo'
 
@@ -41,24 +56,34 @@ def get_user_info(token):
 
 def get_user_id(email_user):
     conn = start_connection()
-
     cursor = conn.cursor()
 
     try:
         cursor.execute("SELECT id FROM user_entity WHERE email LIKE '{0}' OR username LIKE '{0}' OR id LIKE '{0}'".format(email_user))
-
         id = cursor.fetchone()[0]
     except:
         abort(401, "Could not find user")
 
     cursor.close()
-    conn.close()
+
+    return id
+
+def get_user_email(user_id):
+    conn = start_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT id FROM user_entity WHERE id = {0} OR email = {0}".format(user_id))
+        id = cursor.fetchone()[0]
+    except:
+        abort(401, "Could not find user")
+
+    cursor.close()
 
     return id
 
 def get_scope_id(scope_name):
     conn = start_connection()
-
     cursor = conn.cursor()
 
     try:
@@ -69,18 +94,14 @@ def get_scope_id(scope_name):
         abort(401, "Could not find scope")
 
     cursor.close()
-    conn.close()
 
     return id
 
 @app.route('/get_user_scope_id/<email_user>', methods=['POST'])
 def get_user_scope_id(email_user):
     auth_header = request.headers.get('Authorization')
-
     check_request_validity(auth_header)
-
     user_id = get_user_id(email_user)
-
     scope_id = get_scope_id(request.form['scope_name'])
 
     return jsonify([user_id, scope_id])
@@ -88,12 +109,19 @@ def get_user_scope_id(email_user):
 @app.route('/get_user_id/<email_user>', methods=['POST'])
 def get_user_id_rest(email_user):
     auth_header = request.headers.get('Authorization')
-
     check_request_validity(auth_header)
-
     user_id = get_user_id(email_user)
 
     return jsonify(user_id)
+
+@app.route('/get_user_email/<user_id>', methods=['GET'])
+def get_user_email(user_id):
+    auth_header = request.headers.get('Authorization')
+    check_request_validity(auth_header)
+
+    user_email = user_id(user_id)
+
+    return jsonify(user_email)
 
 @app.route('/change_owner/<resource_id>/<new_owner>', methods=['POST'])
 def change_owner(resource_id, new_owner):
@@ -102,7 +130,6 @@ def change_owner(resource_id, new_owner):
     check_request_validity(auth_header)
 
     conn = start_connection()
-
     cursor = conn.cursor()
 
     try:
@@ -129,12 +156,9 @@ def change_owner(resource_id, new_owner):
         cursor.execute(owner_update.format(new_owner_id, resource_id))
     except:
         abort(401, "Update failed")
-    
-    conn.commit()
-    
-    cursor.close()
 
-    conn.close()
+    conn.commit()
+    cursor.close()
 
     return jsonify("Owner changed successfully")
 
@@ -149,4 +173,5 @@ def internal_error(error):
     return "Uncaught exception: is keycloak reachable?"
 
 if __name__ == '__main__':
+    init_db_pool()
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,4 +1,4 @@
-jsonify==0.5
-requests==2.23.0
-Flask==1.1.2
-psycopg2-binary==2.8.5
+requests==2.27.1
+Flask==2.0.3
+psycopg2-binary==2.9.3
+python-dotenv==0.19.2
