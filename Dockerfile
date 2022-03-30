@@ -1,17 +1,15 @@
-FROM ubuntu:20.04
+FROM python:3.9-alpine3.15
 
-RUN apt-get update -y && \
-    apt-get install -y build-essential python3-pip python3-dev
+COPY requirements.txt /tmp/requirements.txt
+
+RUN apk add --no-cache --virtual .build-deps gcc libc-dev \
+    && pip install --no-cache-dir -r /tmp/requirements.txt \
+    && apk del .build-deps gcc libc-dev
 
 WORKDIR /app
 
-COPY ./requirements.txt ./requirements.txt
-
-RUN pip3 install -r requirements.txt
-
 COPY . /app
 
-EXPOSE 5000
 
 ENTRYPOINT [ "gunicorn" ]
 

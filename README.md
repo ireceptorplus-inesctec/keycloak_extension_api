@@ -2,7 +2,7 @@
 
 Service that extends the features of Keycloak by providing additional endpoints. The service connects directly to Keycloak's database.
 
-Docker image availible at: https://hub.docker.com/r/irpinesctec/keycloak_extension_api
+Docker image available at: https://hub.docker.com/r/irpinesctec/keycloak_extension_api
 
 ### Requirements
 

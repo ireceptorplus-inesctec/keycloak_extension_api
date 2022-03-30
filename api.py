@@ -5,27 +5,24 @@ from psycopg2 import pool
 import os, sys
 
 app = Flask(__name__)
-db_connection_pool = None
 
-def init_db_pool():
-    try:
-        global db_connection_pool
-        db_connection_pool = psycopg2.pool.SimpleConnectionPool(1, 20,
-            host=os.environ['DB_HOST'],
-            port=os.environ['DB_PORT'],
-            database=os.environ['DB_DATABASE'],
-            user=os.environ['DB_USER'],
-            password=os.environ['DB_PASSWORD']
-        )
-    except (Exception, psycopg2.DatabaseError) as error:
-        print("Error while connecting to PostgreSQL. Please check your environment settings.", error)
-        sys.exit(-1)
+try:
+    app.config["pool"] = psycopg2.pool.ThreadedConnectionPool(1, 20,
+        host=os.environ['DB_HOST'],
+        port=os.environ['DB_PORT'],
+        database=os.environ['DB_DATABASE'],
+        user=os.environ['DB_USER'],
+        password=os.environ['DB_PASSWORD']
+    )
+except (Exception, psycopg2.DatabaseError) as error:
+    print("Error while connecting to PostgreSQL. Please check your environment settings.", error)
+    sys.exit(-1)
 
 def start_connection():
     try:
-        return db_connection_pool.getconn()
+        return app.config["pool"].getconn()
     except Exception as error:
-        abort(401, "Could not connect to DB: {}".format(e))
+        abort(401, "Could not connect to Keycloak's database. Please check Keycloak Extension's environment settings.: {}".format(error))
 
 def check_request_validity(auth_header):
     if auth_header == None:
@@ -50,7 +47,7 @@ def get_user_info(token):
     response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
-        abort(401, 'Invalid token')
+        abort(401, response.json())
 
     return response.json()
 
@@ -65,7 +62,7 @@ def get_user_id(email_user):
         abort(401, "Could not find user")
 
     cursor.close()
-    db_connection_pool.putconn(conn)
+    app.config["pool"].putconn(conn)
 
     return id
 
@@ -80,7 +77,7 @@ def get_user_email(user_id):
         abort(401, "Could not find user")
 
     cursor.close()
-    db_connection_pool.putconn(conn)
+    app.config["pool"].putconn(conn)
 
     return id
 
@@ -96,7 +93,7 @@ def get_scope_id(scope_name):
         abort(401, "Could not find scope")
 
     cursor.close()
-    db_connection_pool.putconn(conn)
+    app.config["pool"].putconn(conn)
 
     return id
 
@@ -162,7 +159,7 @@ def change_owner(resource_id, new_owner):
 
     conn.commit()
     cursor.close()
-    db_connection_pool.putconn(conn)
+    app.config["pool"].putconn(conn)
 
     return jsonify("Owner changed successfully")
 
@@ -177,5 +174,4 @@ def internal_error(error):
     return "Uncaught exception: is keycloak reachable?"
 
 if __name__ == '__main__':
-    init_db_pool()
     app.run(host='0.0.0.0', port=5000, debug=True)
