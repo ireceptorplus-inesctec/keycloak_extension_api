@@ -71,7 +71,7 @@ def get_user_email(user_id):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("SELECT id FROM user_entity WHERE id = {0} OR email = {0}".format(user_id))
+        cursor.execute("SELECT email FROM user_entity WHERE id LIKE '{0}' OR username LIKE '{0}'".format(user_id))
         id = cursor.fetchone()[0]
     except:
         abort(401, "Could not find user")
@@ -114,12 +114,12 @@ def get_user_id_rest(email_user):
 
     return jsonify(user_id)
 
-@app.route('/get_user_email/<user_id>', methods=['GET'])
-def get_user_email(user_id):
+@app.route('/get_user_email/<user_id>', methods=['POST'])
+def get_user_email_rest(user_id):
     auth_header = request.headers.get('Authorization')
     check_request_validity(auth_header)
 
-    user_email = user_id(user_id)
+    user_email = get_user_email(user_id)
 
     return jsonify(user_email)
 
